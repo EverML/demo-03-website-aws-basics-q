@@ -46,6 +46,48 @@ app.post('/deploy', (req, res) => {
     });
 });
 
+// Endpoint to handle destruction
+app.post('/destroy', (req, res) => {
+    console.log('Destruction requested');
+    
+    // Execute the destroy script
+    exec('bash destroy.sh', (error, stdout, stderr) => {
+        console.log('Destroy script output:', stdout);
+        
+        if (error) {
+            console.error('Destroy error:', error);
+            return res.status(500).json({
+                success: false,
+                message: `Cleanup failed: ${error.message}`
+            });
+        }
+        
+        res.json({
+            success: true,
+            message: 'All AWS resources have been removed successfully'
+        });
+    });
+});
+
+// Endpoint to check if deployment exists
+app.get('/check-deployment', (req, res) => {
+    const deploymentInfoPath = path.join(__dirname, 'deployment-info.json');
+    
+    if (fs.existsSync(deploymentInfoPath)) {
+        try {
+            const deploymentInfo = JSON.parse(fs.readFileSync(deploymentInfoPath, 'utf8'));
+            res.json({
+                deployed: true,
+                ...deploymentInfo
+            });
+        } catch (error) {
+            res.json({ deployed: false });
+        }
+    } else {
+        res.json({ deployed: false });
+    }
+});
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);

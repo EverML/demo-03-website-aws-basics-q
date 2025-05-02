@@ -57,11 +57,12 @@
             </div>
             
             <div class="deployment-section">
-                <h3>Deploy Now</h3>
-                <p>Click the button below to deploy this website to your AWS account:</p>
+                <h3>Manage Deployment</h3>
+                <p>Use the buttons below to deploy or destroy this website on your AWS account:</p>
                 
                 <div class="deployment-controls">
                     <button id="deploy-button" class="btn primary">Deploy to AWS</button>
+                    <button id="destroy-button" class="btn danger hidden">Destroy Site</button>
                 </div>
                 
                 <div id="deploy-status">
@@ -70,6 +71,7 @@
                 
                 <div class="deployment-note">
                     <p><i class="fas fa-info-circle"></i> The deployment process may take a few minutes. CloudFront distribution creation can take up to 15 minutes to fully propagate.</p>
+                    <p><i class="fas fa-exclamation-triangle"></i> The destroy process will remove all AWS resources created for this website.</p>
                 </div>
             </div>
             
@@ -86,19 +88,23 @@
                 <li>The deployment details are returned and displayed on this page</li>
             </ol>
             
-            <div class="warning-box">
-                <strong>Important:</strong> This will create actual AWS resources in your account that may incur charges. While the costs for this demo should be minimal, remember to clean up resources when you're done experimenting.
-            </div>
-            
-            <h2>Cleaning Up</h2>
-            <p>To avoid ongoing charges, you should delete the resources when you're done:</p>
+            <h3>Cleaning Up Resources</h3>
+            <p>When you click the "Destroy Site" button, the following happens:</p>
             
             <ol>
-                <li>Delete the CloudFront distribution</li>
-                <li>Empty and delete the S3 bucket</li>
+                <li>A bash script is executed on your local machine</li>
+                <li>The script uses the AWS CLI with your "ever" profile to remove resources</li>
+                <li>It disables the CloudFront distribution</li>
+                <li>It waits for the distribution to be disabled</li>
+                <li>It deletes the CloudFront distribution</li>
+                <li>It empties the S3 bucket (deletes all files)</li>
+                <li>It deletes the S3 bucket</li>
+                <li>It removes the local deployment information file</li>
             </ol>
             
-            <p>You can do this through the AWS Management Console or using the AWS CLI.</p>
+            <div class="warning-box">
+                <strong>Important:</strong> This will create actual AWS resources in your account that may incur charges. While the costs for this demo should be minimal, remember to clean up resources when you're done experimenting by clicking the "Destroy Site" button.
+            </div>
         </section>
     </main>
 
