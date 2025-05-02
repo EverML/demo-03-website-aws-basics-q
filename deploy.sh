@@ -27,6 +27,14 @@ if ! aws configure list --profile $PROFILE &> /dev/null; then
     exit 1
 fi
 
+# Get AWS account ID
+ACCOUNT_ID=$(aws sts get-caller-identity --profile $PROFILE --query "Account" --output text)
+if [ -z "$ACCOUNT_ID" ]; then
+    echo "❌ Failed to get AWS account ID. Exiting."
+    exit 1
+fi
+echo "AWS Account ID: $ACCOUNT_ID"
+
 # Create S3 bucket
 echo "📦 Creating S3 bucket..."
 if aws s3api create-bucket --bucket $BUCKET_NAME --region $REGION --profile $PROFILE; then
@@ -36,32 +44,34 @@ else
     exit 1
 fi
 
-# Enable static website hosting
+# Configure bucket for website hosting (for index/error document handling)
 echo "🌐 Configuring bucket for static website hosting..."
-aws s3 website s3://$BUCKET_NAME --index-document index.html --error-document error.html --profile $PROFILE
-
-# Set bucket policy for public read access
-echo "🔒 Setting bucket policy for public read access..."
-POLICY='{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "PublicReadGetObject",
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::'$BUCKET_NAME'/*"
-        }
-    ]
-}'
-
-aws s3api put-bucket-policy --bucket $BUCKET_NAME --policy "$POLICY" --profile $PROFILE
+aws s3api put-bucket-website --bucket $BUCKET_NAME --website-configuration '{"IndexDocument":{"Suffix":"index.html"},"ErrorDocument":{"Key":"error.html"}}' --profile $PROFILE
 
 # Upload website files
 echo "📤 Uploading website files..."
 aws s3 sync $WEBSITE_DIR s3://$BUCKET_NAME --exclude "*.sh" --exclude ".git/*" --exclude "*.md" --exclude "deploy.sh" --profile $PROFILE
 
-# Create CloudFront distribution
+# Create Origin Access Control (OAC)
+echo "🔑 Creating Origin Access Control..."
+OAC_NAME="OAC-$BUCKET_NAME"
+OAC_CONFIG='{
+    "Name": "'$OAC_NAME'",
+    "Description": "OAC for '$BUCKET_NAME'",
+    "SigningProtocol": "sigv4",
+    "SigningBehavior": "always",
+    "OriginAccessControlOriginType": "s3"
+}'
+
+OAC_ID=$(aws cloudfront create-origin-access-control --origin-access-control-config "$OAC_CONFIG" --profile $PROFILE --query "OriginAccessControl.Id" --output text)
+
+if [ -z "$OAC_ID" ]; then
+    echo "❌ Failed to create Origin Access Control. Exiting."
+    exit 1
+fi
+echo "✅ Origin Access Control created successfully with ID: $OAC_ID"
+
+# Create CloudFront distribution with OAC
 echo "☁️ Creating CloudFront distribution..."
 DISTRIBUTION_CONFIG='{
     "CallerReference": "'$BUCKET_NAME'",
@@ -71,18 +81,11 @@ DISTRIBUTION_CONFIG='{
         "Items": [
             {
                 "Id": "S3-'$BUCKET_NAME'",
-                "DomainName": "'$BUCKET_NAME'.s3-website-'$REGION'.amazonaws.com",
-                "CustomOriginConfig": {
-                    "HTTPPort": 80,
-                    "HTTPSPort": 443,
-                    "OriginProtocolPolicy": "http-only",
-                    "OriginSslProtocols": {
-                        "Quantity": 1,
-                        "Items": ["TLSv1.2"]
-                    },
-                    "OriginReadTimeout": 30,
-                    "OriginKeepaliveTimeout": 5
-                }
+                "DomainName": "'$BUCKET_NAME'.s3.'$REGION'.amazonaws.com",
+                "S3OriginConfig": {
+                    "OriginAccessIdentity": ""
+                },
+                "OriginAccessControlId": "'$OAC_ID'"
             }
         ]
     },
@@ -115,17 +118,44 @@ DISTRIBUTION_CONFIG='{
 
 DISTRIBUTION_ID=$(aws cloudfront create-distribution --distribution-config "$DISTRIBUTION_CONFIG" --profile $PROFILE --query "Distribution.Id" --output text)
 
-if [ -n "$DISTRIBUTION_ID" ]; then
-    DOMAIN_NAME=$(aws cloudfront get-distribution --id $DISTRIBUTION_ID --profile $PROFILE --query "Distribution.DomainName" --output text)
-    echo "✅ CloudFront distribution created successfully."
-    echo "🌎 Website URL: https://$DOMAIN_NAME"
-    
-    # Save deployment info to a file
-    echo "{\"bucketName\":\"$BUCKET_NAME\",\"region\":\"$REGION\",\"distributionId\":\"$DISTRIBUTION_ID\",\"domainName\":\"$DOMAIN_NAME\"}" > deployment-info.json
-    echo "📝 Deployment information saved to deployment-info.json"
-else
-    echo "❌ Failed to create CloudFront distribution."
-    echo "🌎 Website is still accessible via S3 website endpoint: http://$BUCKET_NAME.s3-website-$REGION.amazonaws.com"
+if [ -z "$DISTRIBUTION_ID" ]; then
+    echo "❌ Failed to create CloudFront distribution. Exiting."
+    exit 1
 fi
 
-echo "✨ Deployment completed!"
+DOMAIN_NAME=$(aws cloudfront get-distribution --id $DISTRIBUTION_ID --profile $PROFILE --query "Distribution.DomainName" --output text)
+echo "✅ CloudFront distribution created successfully with ID: $DISTRIBUTION_ID"
+echo "🌎 Website URL: https://$DOMAIN_NAME"
+
+# Set bucket policy to allow access only from CloudFront
+echo "🔒 Setting bucket policy to allow access only from CloudFront..."
+POLICY='{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowCloudFrontServicePrincipal",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+            },
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::'$BUCKET_NAME'/*",
+            "Condition": {
+                "StringEquals": {
+                    "AWS:SourceArn": "arn:aws:cloudfront::'$ACCOUNT_ID':distribution/'$DISTRIBUTION_ID'"
+                }
+            }
+        }
+    ]
+}'
+
+aws s3api put-bucket-policy --bucket $BUCKET_NAME --policy "$POLICY" --profile $PROFILE
+echo "✅ Bucket policy set successfully."
+
+# Save deployment info to a file
+echo "{\"bucketName\":\"$BUCKET_NAME\",\"region\":\"$REGION\",\"distributionId\":\"$DISTRIBUTION_ID\",\"domainName\":\"$DOMAIN_NAME\"}" > deployment-info.json
+echo "📝 Deployment information saved to deployment-info.json"
+
+echo "✨ Deployment completed! Your website is now accessible only through CloudFront."
+echo "🌎 Website URL: https://$DOMAIN_NAME"
+echo "⏱️ Note: It may take a few minutes for the CloudFront distribution to fully deploy."
