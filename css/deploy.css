@@ -1,0 +1,106 @@
+/* Styles for the deployment section */
+.deployment-section {
+    background-color: #f8f9fa;
+    border: 1px solid var(--aws-gray);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    margin: var(--spacing-xl) 0;
+}
+
+.deployment-section h3 {
+    color: var(--aws-blue);
+    margin-top: 0;
+}
+
+.deployment-controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin: var(--spacing-md) 0;
+}
+
+#deploy-button {
+    background-color: var(--aws-orange);
+    color: white;
+    border: none;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-sm);
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    max-width: 200px;
+}
+
+#deploy-button:hover {
+    background-color: #e68a00;
+}
+
+#deploy-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+#deploy-status {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-sm);
+    background-color: #f0f0f0;
+    min-height: 100px;
+}
+
+.status-info {
+    color: #0066cc;
+}
+
+.status-success {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-error {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.website-url {
+    display: block;
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: #e6f7ff;
+    border: 1px solid #91d5ff;
+    border-radius: var(--radius-sm);
+    color: #0066cc;
+    font-family: monospace;
+    text-decoration: none;
+    text-align: center;
+}
+
+.website-url:hover {
+    background-color: #bae7ff;
+}
+
+.deployment-details {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: var(--radius-sm);
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.deployment-note {
+    margin-top: var(--spacing-md);
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .deployment-controls {
+        flex-direction: column;
+    }
+    
+    #deploy-button {
+        max-width: 100%;
+    }
+}

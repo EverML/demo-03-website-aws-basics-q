@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy This Website - AWS Basics Demo</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/deploy.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="../js/main.js" defer></script>
+    <script src="../js/deploy.js" defer></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <img src="../assets/aws-logo.svg" alt="AWS Logo" class="aws-logo">
+                <span>AWS Basics Demo</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="static-website.html">Static Website</a></li>
+                <li><a href="ec2-instance.html">EC2 Instance</a></li>
+                <li><a href="deploy-me.html" class="active">Deploy Me</a></li>
+                <li><a href="../index.html#about">About</a></li>
+            </ul>
+            <div class="hamburger">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Deploy This Website to AWS</h1>
+                <p>Experience the deployment process firsthand by deploying this website to your own AWS account.</p>
+            </div>
+        </section>
+
+        <section class="container">
+            <h2>Deploy to Your AWS Account</h2>
+            <p>This page allows you to deploy this exact website to your AWS account using S3 and CloudFront, just like you learned in the tutorial. The deployment process will:</p>
+            
+            <ul>
+                <li>Create an S3 bucket with a unique name</li>
+                <li>Configure it for static website hosting</li>
+                <li>Upload all website files</li>
+                <li>Create a CloudFront distribution for global delivery</li>
+                <li>Provide you with the URL to access your deployed site</li>
+            </ul>
+            
+            <div class="note-box">
+                <strong>Note:</strong> This will use the "ever" AWS profile configured on your system. Make sure this profile has the necessary permissions to create S3 buckets and CloudFront distributions.
+            </div>
+            
+            <div class="deployment-section">
+                <h3>Deploy Now</h3>
+                <p>Click the button below to deploy this website to your AWS account:</p>
+                
+                <div class="deployment-controls">
+                    <button id="deploy-button" class="btn primary">Deploy to AWS</button>
+                </div>
+                
+                <div id="deploy-status">
+                    <p>Deployment status will appear here...</p>
+                </div>
+                
+                <div class="deployment-note">
+                    <p><i class="fas fa-info-circle"></i> The deployment process may take a few minutes. CloudFront distribution creation can take up to 15 minutes to fully propagate.</p>
+                </div>
+            </div>
+            
+            <h2>How It Works</h2>
+            <p>When you click the "Deploy to AWS" button, the following happens:</p>
+            
+            <ol>
+                <li>A bash script is executed on your local machine</li>
+                <li>The script uses the AWS CLI with your "ever" profile to create resources</li>
+                <li>It creates an S3 bucket with a unique name based on the current timestamp</li>
+                <li>The bucket is configured for static website hosting with proper permissions</li>
+                <li>All website files are uploaded to the bucket</li>
+                <li>A CloudFront distribution is created pointing to the S3 bucket</li>
+                <li>The deployment details are returned and displayed on this page</li>
+            </ol>
+            
+            <div class="warning-box">
+                <strong>Important:</strong> This will create actual AWS resources in your account that may incur charges. While the costs for this demo should be minimal, remember to clean up resources when you're done experimenting.
+            </div>
+            
+            <h2>Cleaning Up</h2>
+            <p>To avoid ongoing charges, you should delete the resources when you're done:</p>
+            
+            <ol>
+                <li>Delete the CloudFront distribution</li>
+                <li>Empty and delete the S3 bucket</li>
+            </ol>
+            
+            <p>You can do this through the AWS Management Console or using the AWS CLI.</p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">
+                <img src="../assets/aws-logo.svg" alt="AWS Logo" class="aws-logo-small">
+                <span>AWS Basics Demo</span>
+            </div>
+            <div class="footer-links">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="https://aws.amazon.com/documentation/" target="_blank">AWS Documentation</a></li>
+                    <li><a href="https://aws.amazon.com/getting-started/" target="_blank">AWS Getting Started</a></li>
+                    <li><a href="https://aws.amazon.com/pricing/" target="_blank">AWS Pricing</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Demo Pages</h4>
+                <ul>
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="static-website.html">Static Website Hosting</a></li>
+                    <li><a href="ec2-instance.html">EC2 Instance Deployment</a></li>
+                    <li><a href="deploy-me.html">Deploy Me</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 AWS Basics Demo. This is a demonstration project.</p>
+            <p class="disclaimer">Amazon Web Services and AWS are trademarks of Amazon.com, Inc. This site is not affiliated with Amazon Web Services.</p>
+        </div>
+    </footer>
+</body>
+</html>
